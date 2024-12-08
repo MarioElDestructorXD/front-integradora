@@ -12,46 +12,61 @@
                     </div>
                     <div class="navbar-right">
                         <span class="navbar-user">{{ username }}</span>
-                        <button @click="logout" class="logout-btn">Cerrar sesión</button>
+                        <button @click="logout" class="logout-btn">
+                            Cerrar sesión
+                        </button>
                     </div>
                 </div>
             </nav>
         </header>
 
-        <!-- Lista de Problemas -->
-        <div id="problemas-container" class="problemas-container">
-            <p v-if="loading">Cargando problemas...</p>
-            <p v-else-if="!problemas.length">No tienes problemas registrados.</p>
-            <div v-for="problema in problemas" :key="problema.id" class="problema-card"
-                @click="mostrarDetalle(problema)">
-                <div class="informacion">
-                    <h3>{{ problema.titulo }}</h3>
-                    <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
-                </div>
-                <div v-if="problema.fotografia" class="imagen">
-                    <img :src="problema.fotografia" alt="Imagen del problema" class="problema-imagen"
-                        @error="handleImageError" />
-                </div>
-            </div>
+        <!-- Spinner de cierre de sesión -->
+        <div v-if="isLoggingOut" class="spinner-overlay">
+            <div class="spinner"></div>
+            <p>Cerrando sesión...</p>
         </div>
 
-        <!-- Detalles del problema seleccionado -->
-        <div v-if="detalleVisible" class="detalle-container">
-            <div id="detalle-info" class="detalle-info">
-                <h3>Detalles del Problema: {{ detalle.titulo }}</h3>
-                <p><strong>Descripción:</strong> {{ detalle.descripcion }}</p>
-                <img v-if="detalle.fotografia" :src="detalle.fotografia" alt="Imagen del problema"
-                    class="problema-imagen" />
-                <p v-else>No hay imagen disponible para este problema.</p>
+        <!-- Contenedor principal para problemas y detalles -->
+        <div class="main-container">
+            <!-- Lista de Problemas -->
+            <div id="problemas-container" class="problemas-container">
+                <p v-if="loading">Cargando problemas...</p>
+                <p v-else-if="!problemas.length">No tienes problemas registrados.</p>
+                <div v-for="problema in problemas" :key="problema.id" class="problema-card"
+                    @click="mostrarDetalle(problema)">
+                    <div class="problema-info">
+                        <div class="imagen">
+                            <img :src="`data:image/jpeg;base64,${problema.fotografia}`" alt="Imagen del problema"
+                                class="problema-imagen" @error="handleImageError" />
+                        </div>
+                        <div class="informacion">
+                            <h3>{{ problema.titulo }}</h3>
+                            <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <button @click="cerrarDetalle" class="close-btn">X</button>
+
+            <!-- Detalles del problema seleccionado -->
+            <div v-if="detalleVisible" class="detalle-container">
+                <div id="detalle-info" class="detalle-info">
+                    <h3>Detalles del Problema: {{ detalle.titulo }}</h3>
+                    <p><strong>Descripción:</strong> {{ detalle.descripcion }}</p>
+                    <img v-if="detalle.fotografia" :src="`data:image/jpeg;base64,${detalle.fotografia}`"
+                        alt="Imagen del problema" class="detalle-imagen" />
+                    <p v-else>No hay imagen disponible para este problema.</p>
+                </div>
+                <button @click="cerrarDetalle" class="close-btn">X</button>
+            </div>
         </div>
     </div>
 </template>
 
 <script>
-/* eslint-disable vue/multi-word-component-names */
+import Swal from 'sweetalert2';
+
 export default {
+    /* eslint-disable vue/multi-word-component-names */
     name: 'Problem',
     data() {
         return {
@@ -59,19 +74,21 @@ export default {
             loading: true,
             detalleVisible: false,
             detalle: {},
-            username: '',
+            username: '', // Nombre del usuario logueado
+            userImage: '', // Imagen del usuario (si está disponible)
+            isLoggingOut: false, // Estado para controlar el spinner
         };
     },
     created() {
         this.cargarProblemas();
-        this.username = localStorage.getItem('username') || 'Usuario';
+        this.obtenerPerfilUsuario();
     },
     methods: {
-        // Método para cargar los problemas
+        // Método para cargar los problemas del usuario logueado
         async cargarProblemas() {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                this.$router.push('/login'); // Redirige a la página de login si no hay token
+                this.$router.push('/login');
                 return;
             }
 
@@ -97,57 +114,130 @@ export default {
             }
         },
 
+        // Método para obtener el perfil del usuario
+        async obtenerPerfilUsuario() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                this.$router.push('/login');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/user/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    this.username = user.name || 'Usuario'; // Usamos el campo 'name' para mostrar el nombre completo
+                    if (user.photo) {
+                        this.userImage = `data:image/jpeg;base64,${user.photo}`; // Si existe una foto de usuario
+                    }
+                } else {
+                    console.error('Error al obtener perfil de usuario');
+                    this.username = 'Usuario';
+                }
+            } catch (error) {
+                console.error('Error al obtener perfil:', error);
+                this.username = 'Usuario';
+            }
+        },
+
         // Mostrar detalles de un problema
         mostrarDetalle(problema) {
             this.detalle = problema;
             this.detalleVisible = true;
         },
 
-        // Cerrar el panel de detalles
+        // Cerrar detalle de un problema
         cerrarDetalle() {
             this.detalleVisible = false;
         },
 
-        // Manejar error de imagen
+        // Manejo de errores en la carga de imágenes de problemas
         handleImageError(event) {
             event.target.src = 'placeholder.jpg';
             event.target.alt = 'Imagen no disponible';
         },
 
-        // Método para cerrar sesión
-        logout() {
+        async logout() {
+            this.isLoggingOut = true; // Activar el estado de "cierre de sesión" para controlar el spinner
+
             const token = localStorage.getItem('authToken');
             if (token) {
-                fetch('http://localhost:8080/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                })
-                    .then((response) => {
-                        if (response.ok) {
-                            localStorage.removeItem('authToken');
-                            localStorage.removeItem('username');
-                            this.$router.push('/login'); // Redirige al login
-                        } else {
-                            alert('Error al cerrar sesión');
+                try {
+                    // Mostrar el spinner de SweetAlert2 mientras hacemos la solicitud de cierre de sesión
+                    Swal.fire({
+                        title: 'Cerrando sesión...',
+                        text: 'Por favor, espera un momento.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading(); // Muestra el spinner
                         }
-                    })
-                    .catch((error) => {
-                        console.error('Error al cerrar sesión:', error);
-                        alert('No se pudo cerrar sesión');
                     });
+                    
+
+                    // Realizar la solicitud de cierre de sesión al backend
+                    const response = await fetch('http://localhost:8080/auth/logout', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+
+                    if (response.ok) {
+                        // Si la respuesta es exitosa, limpiamos el localStorage
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('username');
+
+                        // Esperamos un pequeño retraso para asegurar que el spinner se vea antes de redirigir
+                        setTimeout(() => {
+                            Swal.close(); // Cerrar el spinner
+                            this.$router.push('/login'); // Redirigir al login
+                        }, 2000); // Esperar 2 segundos antes de redirigir (ajusta si lo necesitas)
+                    } else {
+                        // Si la respuesta no es exitosa
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error al cerrar sesión',
+                            text: 'Por favor, intenta nuevamente.',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cerrar sesión:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al conectar',
+                        text: 'No se pudo cerrar sesión.',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } finally {
+                    this.isLoggingOut = false; // Desactivar el spinner de la interfaz
+                }
             } else {
-                alert('No hay sesión activa');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'No hay sesión activa',
+                    text: 'Por favor, inicia sesión primero.',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
             }
-        },
+        }
     },
 };
 </script>
 
 <style scoped>
-/* Estilo común para navbar de login y problemas */
+/* Navbar */
 .navbar {
     position: relative;
     top: 0;
@@ -209,16 +299,157 @@ export default {
     background-color: #c82333;
 }
 
-/* Estilo para el contenedor de los problemas */
-.problemas-container {
-    width: 50%;
-    padding: 20px;
-    overflow-y: auto;
-    background-color: #f4f4f4;
+/* Contenedor Principal */
+.main-container {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
+    justify-content: center;
+    /* Centra el contenido horizontalmente */
+    align-items: flex-start;
+    /* Alinea los elementos al inicio en el eje vertical */
+    padding: 20px;
+    gap: 20px;
+    max-width: 1200px;
+    /* Limita el ancho máximo */
+    margin: 0 auto;
+    /* Centra el contenedor en la página */
 }
 
-/* Otros estilos permanecen igual */
+/* Lista de Problemas */
+.problemas-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 45%;
+    padding: 20px;
+    background-color: #f4f4f4;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.problema-card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    gap: 20px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.problema-card:hover {
+    transform: scale(1.05);
+}
+
+.problema-imagen {
+    max-width: 150px;
+    max-height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.informacion {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 300px;
+}
+
+.informacion h3 {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.informacion p {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+/* Detalles del Problema */
+.detalle-container {
+    width: 45%;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.detalle-info {
+    font-size: 14px;
+    color: #333;
+}
+
+.detalle-info h3 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.detalle-imagen {
+    max-width: 100%;
+    /* La imagen ocupará todo el ancho disponible */
+    height: auto;
+    max-height: 300px;
+    /* Limita la altura máxima de la imagen */
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+/* Botón Cerrar Detalle */
+.close-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.close-btn:hover {
+    background-color: #c82333;
+}
+
+/* Spinner de cierre de sesión */
+.spinner-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #fff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
 </style>

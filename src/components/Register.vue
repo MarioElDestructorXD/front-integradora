@@ -60,7 +60,7 @@
                     </div>
                     <select v-model="role" required>
                         <option value="">Seleccione rol</option>
-                        <option value="USER">Usuario</option>
+                        <option value="CLIENTE">Usuario</option>
                         <option value="PROVEEDOR">Proveedor</option>
                     </select>
                 </div>

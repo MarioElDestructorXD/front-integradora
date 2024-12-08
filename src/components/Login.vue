@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import Swal from 'sweetalert2'
+import Swal from 'sweetalert2';
 
 /* eslint-disable vue/multi-word-component-names */
 export default {
