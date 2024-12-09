@@ -4,7 +4,7 @@
         <nav class="navbar">
             <div class="navbar-container">
                 <a class="navbar-logo" href="#">
-                    <img src="../assets/logo.png" alt="Logo de FixyPro" />
+                    <img src="../../assets/logo.png" alt="Logo de FixyPro" />
                 </a>
                 <span class="navbar-brand">FixyPro</span>
             </div>
@@ -103,7 +103,11 @@ export default {
 
                     // Redirigir después de que se haya mostrado el spinner
                     setTimeout(() => {
-                        this.$router.push('/problem');
+                        if (data.role === 'CLIENTE') {
+                            this.$router.push('/problem');  // Redirige a página de administrador
+                        } else if (data.role === 'PROVEEDOR') {
+                            this.$router.push('/problemproveedor');   // Redirige a página de usuario
+                        }
                         Swal.close(); // Cierra el spinner
                     }, 2000); // Mantén el spinner 2 segundos antes de redirigir
                 } else {

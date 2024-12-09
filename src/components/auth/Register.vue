@@ -5,7 +5,7 @@
             <nav class="navbar">
                 <div class="navbar-container">
                     <a class="navbar-logo" href="#">
-                        <img src="../assets/logo.png" alt="Logo de FixyPro" />
+                        <img src="../../assets/logo.png" alt="Logo de FixyPro" />
                     </a>
                     <span class="navbar-brand">FixyPro</span>
                 </div>

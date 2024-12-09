@@ -10,10 +10,27 @@ import {
   faLock,
   faUserShield,
   faCamera,
+  faPlus,
+  faCloudArrowUp,
+  faPen,
+  faList,
+  faCompass,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 
-library.add(faUser, faPhone, faEnvelope, faLock, faUserShield, faCamera);
+library.add(
+  faUser,
+  faPhone,
+  faEnvelope,
+  faLock,
+  faUserShield,
+  faCamera,
+  faPlus,
+  faCloudArrowUp,
+  faPen,
+  faList,
+  faCompass
+);
 
 createApp(App)
   .component("font-awesome-icon", FontAwesomeIcon)
