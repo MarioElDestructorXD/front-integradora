@@ -13,14 +13,13 @@
             <div v-for="problema in problemas" :key="problema.id" class="problema-card"
                 @click="mostrarDetalle(problema)">
                 <div class="problema-info">
-                    <div class="imagen">
-                        <img v-if="problema.fotografia" :src="`data:image/jpeg;base64,${problema.fotografia}`"
-                            alt="Imagen del problema" class="problema-imagen" @error="handleImageError" />
-                    </div>
                     <div class="informacion">
                         <h3>{{ problema.titulo }}</h3>
                         <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
+                        <p v-if="problema.ubicacion"><strong>Ubicación:</strong> {{ problema.ubicacion.direccion }}</p>
+                        <!-- Mostrar ubicación -->
                     </div>
+                    <span :class="`badge ${problema.estado}`">{{ problema.estado }}</span>
                 </div>
             </div>
         </div>
@@ -35,6 +34,8 @@
                 </div>
                 <div class="modal-body">
                     <p><strong>Descripción:</strong> {{ detalle.descripcion }}</p>
+                    <p v-if="detalle.ubicacion"><strong>Ubicación:</strong> {{ detalle.ubicacion.direccion }}</p>
+                    <!-- Mostrar ubicación en el modal -->
                     <img v-if="detalle.fotografia" :src="`data:image/jpeg;base64,${detalle.fotografia}`"
                         alt="Imagen del problema" class="detalle-imagen" />
                     <p v-else>No hay imagen disponible para este problema.</p>
@@ -166,6 +167,12 @@ export default {
 </script>
 
 <style scoped>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
 
 
 /* Contenedor Principal */
@@ -174,7 +181,6 @@ export default {
     justify-content: flex-start;
     align-items: flex-start;
     flex-wrap: wrap;
-    /* Permite el ajuste de los cards en filas */
     gap: 20px;
     max-width: 1200px;
     margin: 0 auto;
@@ -184,9 +190,7 @@ export default {
 .problemas-container {
     display: flex;
     flex-wrap: wrap;
-    /* Permite el ajuste de los elementos */
     gap: 20px;
-    /* Espacio entre los cards */
     width: 100%;
     padding: 20px;
     justify-content: flex-start;
@@ -197,20 +201,17 @@ export default {
 .problema-card {
     display: flex;
     flex-direction: column;
-    /* Los elementos dentro del card se organizan de manera vertical */
     align-items: center;
     background-color: #e7e7e7;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     gap: 10px;
-    /* Espacio entre los elementos dentro del card */
     cursor: pointer;
     transition: transform 0.3s ease;
     margin-bottom: 16px;
     width: 100%;
     max-width: 280px;
-    /* Limita el tamaño máximo de los cards */
 }
 
 .problema-card:hover {
@@ -243,6 +244,32 @@ export default {
     margin-bottom: 10px;
 }
 
+/* Estilos para el badge de estado */
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 12px;
+    color: white;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.badge.ABIERTO {
+    background-color: #28a745;
+    /* Verde */
+}
+
+.badge.EN_PROCESO {
+    background-color: #ffc107;
+    /* Amarillo */
+}
+
+.badge.CERRADO {
+    background-color: #dc3545;
+    /* Rojo */
+}
 
 /* Modal */
 .modal-overlay {
@@ -345,7 +372,4 @@ export default {
 .floating-button:hover {
     background-color: #0056b3;
 }
-
-
-
 </style>

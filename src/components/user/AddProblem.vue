@@ -2,14 +2,7 @@
     <div>
         <!-- Navbar -->
         <header>
-            <nav class="navbar">
-                <div class="navbar-container">
-                    <a class="navbar-logo" href="#">
-                        <img src="../../assets/logo.png" alt="Logo de FixyPro" />
-                    </a>
-                    <span class="navbar-brand">FixyPro</span>
-                </div>
-            </nav>
+            <NavBar />
         </header>
 
         <!-- Contenido de Creación de Problema -->
@@ -50,6 +43,27 @@
                     </select>
                 </div>
 
+                <!-- Select para direcciones -->
+                <div class="row">
+                    <div class="input-icon-container">
+                        <font-awesome-icon icon="map-marker-alt" class="input-icon" />
+                    </div>
+                    <div class="row">
+                        <div class="input-icon-container">
+                            <font-awesome-icon icon="map-marker-alt" class="input-icon" />
+                        </div>
+                        <select v-model="ubicacionSeleccionada" required>
+                            <option value="">Selecciona una dirección</option>
+                            <option v-for="ubicacion in ubicaciones" :key="ubicacion.id" :value="ubicacion.id">
+                                {{ ubicacion.direccion }}
+                            </option>
+                        </select>
+                    </div>
+
+
+                </div>
+
+
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">Crear Problema</button>
                 </div>
@@ -58,29 +72,138 @@
     </div>
 </template>
 
+
 <script>
 import Swal from 'sweetalert2';
+import NavBar from '../NavBar.vue';
 
 export default {
     name: 'AddProblem',
+    components:{
+        NavBar,
+    },
     data() {
         return {
+            profile: {
+                id: "",
+                name: "",
+                firstSurname: "",
+                secondSurname: "",
+                email: "",
+                phone: "",
+                profileImage: "",
+            },
             titulo: '',
             descripcion: '',
             foto: null,  // Almacena la foto seleccionada
             categoria: '',
+            ubicaciones: [], // Lista de ubicaciones del usuario
+            ubicacionSeleccionada: '', // Dirección seleccionada
         };
     },
+    mounted() {
+        console.log('Comenzando a obtener ubicaciones...');
+        this.obtenerUbicaciones();
+    },
     methods: {
-        handleFotoChange(event) {
-            // Captura la foto seleccionada por el usuario
-            const file = event.target.files[0];
 
+        async obtenerUbicaciones() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    console.log('No hay token de autenticación. Redirigiendo al login...');
+                    this.$router.push('/login');
+                    return;
+                }
+
+                // Aseguramos que profile.id esté disponible
+                if (!this.profile.id) {
+                    console.log('No se ha encontrado el profile.id, obteniendo perfil...');
+                    await this.obtenerPerfilUsuario(); // Llamamos a la función para cargar el perfil
+                }
+
+                if (!this.profile.id) {
+                    console.log('No se pudo obtener el perfil del usuario');
+                    throw new Error('El perfil del usuario no está disponible.');
+                }
+
+                const url = `http://localhost:8080/api/ubicaciones/usuario/${this.profile.id}`;
+                console.log('URL de la solicitud de ubicaciones:', url); // Verificamos la URL
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    console.log('Error al obtener las ubicaciones:', response.status, response.statusText);
+                    throw new Error('Error al obtener las ubicaciones');
+                }
+
+                const data = await response.json();
+                console.log('Datos obtenidos de ubicaciones:', data);  // Verificamos los datos recibidos
+
+                this.ubicaciones = data; // Asignamos las ubicaciones obtenidas al estado
+            } catch (error) {
+                console.error('Error al obtener ubicaciones:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: error.message || 'No se pudieron cargar las direcciones.',
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                });
+            }
+        },
+
+        async obtenerPerfilUsuario() {
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    console.log('No hay token de autenticación. Redirigiendo al login...');
+                    this.$router.push('/login');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:8080/api/user/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    console.log('Error al obtener el perfil del usuario:', response.status, response.statusText);
+                    throw new Error('Error al obtener el perfil del usuario');
+                }
+
+                const data = await response.json();
+                console.log('Datos obtenidos del perfil del usuario:', data); // Verificamos los datos del perfil
+
+                this.profile = data; // Asignamos el perfil obtenido
+            } catch (error) {
+                console.error('Error al obtener el perfil del usuario:', error);
+                await Swal.fire({
+                    title: 'Error',
+                    text: 'No se pudo cargar el perfil del usuario.',
+                    icon: 'error',
+                    confirmButtonText: 'Entendido',
+                });
+            }
+        },
+
+        // Este es un método auxiliar para comprobar y mostrar las direcciones
+        async mostrarDirecciones() {
+            console.log('Direcciones obtenidas:', this.ubicaciones);
+            // Aquí puedes realizar cualquier lógica adicional para mostrar las direcciones en el frontend
+        },
+        handleFotoChange(event) {
+            const file = event.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                    // Convertimos la imagen a base64
-                    this.foto = reader.result.split(',')[1]; // Tomamos solo la parte base64 (después de la coma)
+                    this.foto = reader.result.split(',')[1]; // Convertimos a base64
                 };
                 reader.readAsDataURL(file);
             }
@@ -98,7 +221,7 @@ export default {
 
             if (!confirmCreate.isConfirmed) return;
 
-            if (!this.titulo || !this.descripcion || !this.categoria) {
+            if (!this.titulo || !this.descripcion || !this.categoria || !this.ubicacionSeleccionada) {
                 await Swal.fire({
                     title: 'Campos incompletos',
                     text: 'Por favor, completa todos los campos.',
@@ -109,63 +232,33 @@ export default {
             }
 
             try {
-                // Verificar si se ha seleccionado una foto
-                if (!this.foto) {
-                    await Swal.fire({
-                        title: 'Foto faltante',
-                        text: 'Por favor, sube una foto.',
-                        icon: 'warning',
-                        confirmButtonText: 'Entendido',
-                    });
-                    return;
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    throw new Error('No autenticado');
                 }
 
-                // Crear el objeto JSON para enviar los datos
                 const data = {
                     titulo: this.titulo,
                     descripcion: this.descripcion,
                     categoria: this.categoria,
-                    fotografia: this.foto,  // Enviar foto como base64
+                    fotografia: this.foto,
                     estado: "ABIERTO",
-                    usuario: {
-                        id: 1,  // Asegúrate de usar el ID del usuario logueado
-                    },
-                    proveedor: null, // O el ID del proveedor si aplica
+                    ubicacion: { id: this.ubicacionSeleccionada },
+                    usuario: { id: 1 }, // Ajustar si el ID del usuario viene de otro lado
                 };
 
-                // Obtener el token de autenticación
-                const token = localStorage.getItem('authToken');
-
-                // Verificar si el token existe
-                if (!token) {
-                    await Swal.fire({
-                        title: 'No autenticado',
-                        text: 'Necesitas estar autenticado para crear un problema.',
-                        icon: 'error',
-                        confirmButtonText: 'Entendido',
-                    });
-                    return;
-                }
-
-                // Enviar la solicitud como JSON
                 const response = await fetch('http://localhost:8080/api/problemas', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`,  // Incluir el token JWT
+                        'Authorization': `Bearer ${token}`,
                     },
-                    body: JSON.stringify(data),  // Convertir los datos a JSON
+                    body: JSON.stringify(data),
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    await Swal.fire({
-                        title: 'Error',
-                        text: errorData.message || 'No se pudo crear el problema. Verifica tus permisos.',
-                        icon: 'error',
-                        confirmButtonText: 'Entendido',
-                    });
-                    return;
+                    throw new Error(errorData.message || 'Error al crear el problema');
                 }
 
                 await Swal.fire({
@@ -179,16 +272,16 @@ export default {
             } catch (error) {
                 await Swal.fire({
                     title: 'Error',
-                    text: 'Error al conectarse al servidor.',
+                    text: error.message || 'Error al conectarse al servidor.',
                     icon: 'error',
                     confirmButtonText: 'Entendido',
                 });
             }
-        }
-
-    }
+        },
+    },
 };
 </script>
+
 
 
 <style scoped>
@@ -211,46 +304,6 @@ body {
     background: #f8f8f8;
     overflow: hidden;
 }
-
-/* Navbar Styles */
-header {
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background-color: #003049;
-    padding: 12px 0;
-    z-index: 1000;
-}
-
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 20px;
-    width: 100%;
-}
-
-.navbar-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.navbar-logo img {
-    width: 40px;
-    height: auto;
-}
-
-.navbar-brand {
-    color: white !important;
-    font-size: 24px;
-    font-weight: 600;
-    text-align: center;
-    flex-grow: 1;
-}
-
 /* Wrapper para el formulario */
 .wrapper {
     width: 100%;
@@ -349,4 +402,6 @@ form .row textarea::placeholder {
 .form-actions button:hover {
     background-color: #022c47;
 }
+
+
 </style>

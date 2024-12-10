@@ -5,6 +5,7 @@ import Problem from "../components/user/Problem.vue";
 import AddProblem from "../components/user/AddProblem.vue";
 import ProblemProveedor from "../components/userproveedor/ProblemProveedor.vue";
 import Profile from "../components/user/Profile.vue";
+import ProfileProveedor from "../components/userproveedor/ProfileProveedor.vue";
 // Función para verificar si el usuario está autenticado
 function isAuthenticated() {
   return !!localStorage.getItem("authToken");
@@ -79,6 +80,18 @@ const routes = [
     path: "/profile", // Nueva ruta para agregar problemas
     name: "Profile",
     component: Profile, // Referencia al componente AddProblem
+    beforeEnter: (to, from, next) => {
+      if (!isAuthenticated()) {
+        next("/login"); // Si no está logueado, redirige al Login
+      } else {
+        next(); // Si está logueado, permite el acceso a la página de agregar problema
+      }
+    },
+  },
+  {
+    path: "/profileproveedor", // Nueva ruta para agregar problemas
+    name: "ProfileProveedor",
+    component: ProfileProveedor, // Referencia al componente AddProblem
     beforeEnter: (to, from, next) => {
       if (!isAuthenticated()) {
         next("/login"); // Si no está logueado, redirige al Login

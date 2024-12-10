@@ -2,22 +2,7 @@
     <div class="contenedor-principal">
         <!-- Navbar -->
         <header>
-            <nav class="navbar">
-                <div class="navbar-container">
-                    <div class="navbar-left">
-                        <router-link to="/" class="navbar-logo">
-                            <img src="../../assets/logo.png" alt="Logo de FixyPro" />
-                        </router-link>
-                        <span class="navbar-brand">FixyPro</span>
-                    </div>
-                    <div class="navbar-right">
-                        <span class="navbar-user">{{ username }}</span>
-                        <button @click="logout" class="logout-btn">
-                            Cerrar sesión
-                        </button>
-                    </div>
-                </div>
-            </nav>
+            <NavBar />
         </header>
 
         <!-- Spinner de cierre de sesión -->
@@ -34,13 +19,12 @@
             <div v-for="problema in problemas" :key="problema.idProblema" class="problema-card"
                 @click="mostrarDetalle(problema)">
                 <div class="problema-info">
-                    <div class="imagen">
-                        <img v-if="problema.fotografia" :src="`data:image/jpeg;base64,${problema.fotografia}`"
-                            alt="Imagen del problema" class="problema-imagen" @error="handleImageError" />
-                    </div>
                     <div class="informacion">
                         <h3>{{ problema.titulo }}</h3>
                         <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
+                        <p><strong>Creado por:</strong> {{ problema.creadoPor }}</p>
+                        <p><strong>Dirección:</strong> {{ problema.ubicacion.direccion }}</p> <!-- Dirección -->
+                        <span :class="['badge', problema.estado]">{{ problema.estado }}</span>
                     </div>
                 </div>
             </div>
@@ -54,16 +38,26 @@
                     <button @click="cerrarDetalle" class="close-btn">×</button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Descripción:</strong> {{ detalle.descripcion }}</p>
+                    <p><strong>Descripción:</strong> {{ detalle.idProblema }}</p>
                     <p><strong>Creado por:</strong> {{ detalle.creadoPor }}</p>
-                    <!-- Agregado el creador del problema -->
+                    <p><strong>Dirección:</strong> {{ detalle.ubicacion.direccion }}</p> <!-- Dirección -->
+                    <p><strong>Estado:</strong> <span :class="['badge', detalle.estado]">{{ detalle.estado }}</span></p>
                     <img v-if="detalle.fotografia" :src="`data:image/jpeg;base64,${detalle.fotografia}`"
                         alt="Imagen del problema" class="detalle-imagen" />
                     <p v-else>No hay imagen disponible para este problema.</p>
                 </div>
                 <div class="modal-footer">
-                    <button @click="aceptarProblema(detalle.id)" class="close-btn">Aceptar problema</button>
-                    <button @click="cerrarDetalle" class="close-btn">Cerrar</button>
+                    <button @click="aceptarProblema(detalle.idProblema)" class="accept-btn"
+                        :disabled="detalle.estado !== 'ABIERTO'">
+                        Aceptar problema
+                    </button>
+                    <button @click="cancelarProblema(detalle.idProblema)" class="cancel-btn"
+                        :disabled="detalle.estado === 'ABIERTO'">
+                        Cancelar problema
+                    </button>
+                    <button @click="cerrarDetalle" class="close-btn">
+                        Cerrar
+                    </button>
                 </div>
             </div>
         </div>
@@ -74,11 +68,16 @@
     </div>
 </template>
 
+
 <script>
 import Swal from 'sweetalert2';
+import NavBar from '../NavBar';
 
 export default {
     name: 'ProblemProveedor',
+    components: {
+        NavBar
+    },
     data() {
         return {
             problemas: [],  // Array para almacenar los problemas
@@ -109,63 +108,14 @@ export default {
                 return;
             }
 
-            // Obtener el ID del problema a partir de una consulta GET al servidor
-            let idProblema;
             try {
-                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId.idProblema}`, {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    idProblema = data.idProblema;  // Asegúrate de que la respuesta contenga el campo 'idProblema'
-                    console.log("Detalles del problema:", data);
-                } else {
-                    const errorData = await response.text();
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al obtener detalles del problema',
-                        text: errorData || 'Por favor intenta nuevamente.',
-                        timer: 3000,
-                    });
-                    return;
-                }
-            } catch (error) {
-                console.error('Error al obtener detalles del problema:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de conexión',
-                    text: 'No se pudo obtener los detalles del problema.',
-                    timer: 3000,
-                });
-                return;
-            }
-
-            // Si el ID del problema es obtenido correctamente, proceder con la aceptación
-            if (!this.userId) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudo obtener el ID del usuario.',
-                    timer: 3000,
-                });
-                return;
-            }
-
-            try {
-                const response = await fetch(`http://localhost:8080/api/problemas/${idProblema}/aceptar`, {
+                // Realiza la solicitud PUT al backend para cambiar el estado del problema a 'EN_PROCESO'
+                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/aceptar`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify({
-                        proveedor: this.userId,
-                    }),
                 });
 
                 if (response.ok) {
@@ -175,8 +125,8 @@ export default {
                         text: 'Se te ha asignado este problema.',
                         timer: 3000,
                     });
-                    this.cargarProblemas();
-                    this.cerrarDetalle();
+                    this.cargarProblemas();  // Recargar los problemas después de aceptar
+                    this.cerrarDetalle();    // Cerrar el modal de detalle
                 } else {
                     const errorData = await response.text();
                     Swal.fire({
@@ -195,8 +145,57 @@ export default {
                     timer: 3000,
                 });
             }
-        }
-        ,
+        },
+        async cancelarProblema(problemaId) {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No autenticado',
+                    text: 'Por favor inicia sesión.',
+                    timer: 3000,
+                });
+                return;
+            }
+
+            // Realizar la solicitud para cancelar el problema
+            try {
+                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/cancelar`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Problema cancelado',
+                        text: 'Se ha cancelado el problema y se ha liberado.',
+                        timer: 3000,
+                    });
+                    this.cargarProblemas();  // Recargar los problemas para reflejar el cambio
+                    this.cerrarDetalle();    // Cerrar el modal
+                } else {
+                    const errorData = await response.text();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al cancelar el problema',
+                        text: errorData || 'Por favor intenta nuevamente.',
+                        timer: 3000,
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cancelar el problema:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo cancelar el problema.',
+                    timer: 3000,
+                });
+            }
+        },
 
 
         abrirFormulario() {
@@ -541,18 +540,6 @@ export default {
     font-size: 1.2rem;
 }
 
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: #333;
-    cursor: pointer;
-}
-
-.close-btn:hover {
-    color: #dc3545;
-}
-
 .modal-body {
     font-size: 0.9rem;
     line-height: 1.4;
@@ -568,10 +555,13 @@ export default {
 
 .modal-footer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    /* Controla el espacio entre los botones */
 }
 
-.modal-footer .close-btn {
+/* Estilo para el botón Aceptar problema */
+.modal-footer .accept-btn {
     background-color: #007bff;
     color: white;
     padding: 8px 15px;
@@ -581,9 +571,64 @@ export default {
     font-size: 0.9rem;
 }
 
-.modal-footer .close-btn:hover {
+.modal-footer .accept-btn:hover {
     background-color: #0056b3;
 }
+
+/* Estilo para el botón Aceptar problema deshabilitado */
+.modal-footer .accept-btn:disabled {
+    background-color: #e0e0e0;
+    /* Color de fondo gris claro */
+    color: #b0b0b0;
+    /* Color de texto gris oscuro */
+    cursor: not-allowed;
+    /* Cambia el cursor para indicar que está deshabilitado */
+}
+
+.modal-footer .cancel-btn {
+    background-color: #f8c30f;
+    /* Color de fondo amarillo */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+/* Cambio de color cuando el botón "Cancelar problema" está habilitado */
+.modal-footer .cancel-btn:hover {
+    background-color: #e0a800;
+    /* Cambio de color cuando se pasa el mouse */
+}
+
+/* Estilo para el botón Cancelar problema deshabilitado */
+.modal-footer .cancel-btn:disabled {
+    background-color: #e0e0e0;
+    /* Color de fondo gris claro */
+    color: #b0b0b0;
+    /* Color de texto gris oscuro */
+    cursor: not-allowed;
+    /* Cambia el cursor para indicar que está deshabilitado */
+}
+
+/* Estilo para el botón Cerrar */
+.modal-footer .close-btn {
+    background-color: #dc3545;
+    /* Color de fondo rojo */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.modal-footer .close-btn:hover {
+    background-color: #c82333;
+}
+
+
 
 /* Botón flotante */
 .floating-button {
@@ -625,6 +670,31 @@ export default {
     height: 50px;
     animation: spin 1s linear infinite;
 }
+
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 12px;
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge.ABIERTO {
+    background-color: green;
+}
+
+.badge.EN_PROCESO {
+    background-color: yellow;
+    color: black;
+    /* El texto en amarillo debe ser de color negro para visibilidad */
+}
+
+.badge.CERRADO {
+    background-color: red;
+}
+
+
 
 @keyframes spin {
     0% {

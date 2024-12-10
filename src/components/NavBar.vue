@@ -3,20 +3,39 @@
         <nav class="navbar">
             <div class="navbar-container">
                 <div class="navbar-left">
-                    <router-link to="/" class="navbar-logo">
-                        <img src="../assets/logo.png" alt="Logo de FixyPro" />
-                    </router-link>
-                    <span class="navbar-brand">FixyPro</span>
+                    <template v-if="role === 'CLIENTE'">
+                        <router-link to="/" class="navbar-logo">
+                            <span class="navbar-brand">FixyPro</span>
+                        </router-link>
+                    </template>
+                    <template v-if="role === 'PROVEEDOR'">
+                        <router-link to="/problemProveedor" class="navbar-logo">
+                            <span class="navbar-brand">FixyPro</span>
+                        </router-link>
+                    </template>
                 </div>
                 <div class="navbar-right">
-                    <span class="navbar-user">{{ username }}</span>
-                    <!-- Enlace al perfil de usuario -->
-                    <router-link to="/profile" class="navbar-profile-link">
-                        Perfil
-                    </router-link>
-                    <button @click="logout" class="logout-btn">
+                    <!-- Mostrar enlaces solo si el usuario es CLIENTE -->
+                    <template v-if="role === 'CLIENTE'">
+                        <router-link to="/profile" class="navbar-profile-link">
+                            Perfil
+                        </router-link>
+                        <router-link to="/problem" class="navbar-profile-link">
+                            Problemas
+                        </router-link>
+                    </template>
+                    <template v-if="role === 'PROVEEDOR'">
+                        <router-link to="/profileproveedor" class="navbar-profile-link">
+                            Perfil
+                        </router-link>
+                        <router-link to="/problemProveedor" class="navbar-profile-link">
+                            Todos Los Problemas
+                        </router-link>
+                    </template>
+                    <!-- Enlace de cerrar sesión visible para todos -->
+                    <router-link to="#" @click.prevent="logout" class="logout-link">
                         Cerrar sesión
-                    </button>
+                    </router-link>
                 </div>
             </div>
         </nav>
@@ -33,8 +52,8 @@
 import Swal from 'sweetalert2';
 
 export default {
-
     /* eslint-disable vue/multi-word-component-names */
+
     name: "Navbar",
     data() {
         return {
@@ -45,6 +64,7 @@ export default {
             username: '', // Nombre del usuario logueado
             userImage: '', // Imagen del usuario (si está disponible)
             isLoggingOut: false, // Estado para controlar el spinner
+            role: '', // Rol del usuario
         };
     },
     created() {
@@ -69,17 +89,21 @@ export default {
 
                 if (response.ok) {
                     const user = await response.json();
-                    this.username = user.name || 'Usuario'; // Usamos el campo 'name' para mostrar el nombre completo
+                    this.username = user.name || 'Usuario';
+                    this.firstSurname = user.firstSurname;
+                    this.role = user.role || 'Cliente'; // Suponemos que el rol se pasa desde el backend
                     if (user.photo) {
                         this.userImage = `data:image/jpeg;base64,${user.photo}`; // Si existe una foto de usuario
                     }
                 } else {
                     console.error('Error al obtener perfil de usuario');
                     this.username = 'Usuario';
+                    this.role = 'Cliente'; // Default a Cliente si no se puede obtener el perfil
                 }
             } catch (error) {
                 console.error('Error al obtener perfil:', error);
                 this.username = 'Usuario';
+                this.role = 'Cliente'; // Default a Cliente en caso de error
             }
         },
         async logout() {
@@ -165,6 +189,7 @@ export default {
 .navbar-profile-link:hover {
     text-decoration: underline;
 }
+
 .navbar {
     position: relative;
     top: 0;
@@ -213,18 +238,12 @@ export default {
 }
 
 
-.logout-btn {
-    background-color: #dc3545;
+/* Enlace de logout */
+.logout-link {
     color: white;
-    border: none;
-    padding: 8px 12px;
-    font-size: 14px;
+    text-decoration: none;
     cursor: pointer;
-    border-radius: 5px;
-}
-
-.logout-btn:hover {
-    background-color: #c82333;
+    font-size: 16px;
 }
 
 /* Spinner de cierre de sesión */
