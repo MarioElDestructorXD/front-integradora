@@ -86,6 +86,7 @@
 
 <script>
 import Swal from 'sweetalert2';
+const apiUrl = import.meta.env.VITE_BACKEND_URL; // Debe definirse en .env
 
 /* eslint-disable vue/multi-word-component-names */
 export default {
@@ -143,7 +144,7 @@ export default {
                 };
 
                 // Enviar el JSON al servidor
-                const response = await fetch(`http://52.86.242.121:8085/auth/register`, {
+                const response = await fetch(`${apiUrl}/auth/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
