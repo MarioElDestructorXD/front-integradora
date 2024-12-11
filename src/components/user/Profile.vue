@@ -106,6 +106,7 @@
 import Swal from "sweetalert2";  // Importa SweetAlert2
 import { GMapMap, GMapMarker } from "@fawmi/vue-google-maps";
 import NavBar from '../NavBar.vue'
+const apiUrl = process.env.VUE_APP_API_URL;
 
 export default {
     /* eslint-disable vue/multi-word-component-names */
@@ -149,6 +150,7 @@ export default {
     methods: {
 
         async deleteAddress(addressId) {
+
             const token = localStorage.getItem("authToken");
             if (!token) {
                 this.$router.push("/login");
@@ -166,7 +168,7 @@ export default {
                 });
 
                 if (result.isConfirmed) {
-                    const response = await fetch(`http://localhost:8080/api/ubicaciones/${addressId}`, {
+                    const response = await fetch(`${apiUrl}/api/ubicaciones/${addressId}`, {
                         method: "DELETE",
                         headers: {
                             "Content-Type": "application/json",
@@ -194,7 +196,7 @@ export default {
             }
             try {
                 this.isLoading = true;  // Activamos el spinner
-                const response = await fetch(`http://localhost:8080/api/ubicaciones/usuario/${this.profile.id}`, {
+                const response = await fetch(`${apiUrl}/api/ubicaciones/usuario/${this.profile.id}`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -228,7 +230,7 @@ export default {
             }
             try {
                 this.isLoading = true;
-                const response = await fetch("http://localhost:8080/api/user/profile", {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -267,7 +269,7 @@ export default {
             }
             try {
                 this.isLoading = true;
-                const response = await fetch("http://localhost:8080/api/user/profile", {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: "PUT",
                     headers: {
                         "Content-Type": "application/json",
@@ -342,7 +344,7 @@ export default {
 
             try {
                 this.isLoading = true;
-                const response = await fetch(`http://localhost:8080/api/ubicaciones/${this.profile.id}`, {
+                const response = await fetch(`${apiUrl}/api/ubicaciones/${this.profile.id}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

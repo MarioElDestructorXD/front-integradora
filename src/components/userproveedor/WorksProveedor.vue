@@ -76,8 +76,11 @@
 <script>
 import Swal from 'sweetalert2';
 import NavBar from '../NavBar';
+const apiUrl = process.env.VUE_APP_API_URL;
+
 
 export default {
+    
     name: 'WorksProveedor',
     components: {
         NavBar
@@ -114,7 +117,7 @@ export default {
 
             try {
                 // Realiza la solicitud PUT al backend para cambiar el estado del problema a 'EN_PROCESO'
-                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/aceptar`, {
+                const response = await fetch(`${apiUrl}/api/problemas/${problemaId}/aceptar`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -163,7 +166,7 @@ export default {
             }
             try {
                 console.log('Intentando cancelar problema con ID:', problemaId); // Registro de depuración
-                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/cancelar`, {
+                const response = await fetch(`${apiUrl}/api/problemas/${problemaId}/cancelar`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -215,7 +218,7 @@ export default {
             }
 
             try {
-                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/terminar`, {
+                const response = await fetch(`${apiUrl}/api/problemas/${problemaId}/terminar`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -264,7 +267,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/problemas', {
+                const response = await fetch(`${apiUrl}/api/problemas`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -305,7 +308,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -363,7 +366,7 @@ export default {
                     });
 
                     // Realizar la solicitud de cierre de sesión al backend
-                    const response = await fetch('http://localhost:8080/auth/logout', {
+                    const response = await fetch(`${apiUrl}/auth/logout`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -71,6 +71,7 @@
 
 <script>
 import NavBar from '../NavBar.vue';
+const apiUrl = process.env.VUE_APP_API_URL;
 
 export default {
     components: {
@@ -127,7 +128,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/problemas', {
+                const response = await fetch(`${apiUrl}/api/problemas`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -150,6 +151,7 @@ export default {
 
         // Método para obtener el perfil del usuario
         async obtenerPerfilUsuario() {
+
             const token = localStorage.getItem('authToken');
             if (!token) {
                 this.$router.push('/login');
@@ -157,7 +159,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

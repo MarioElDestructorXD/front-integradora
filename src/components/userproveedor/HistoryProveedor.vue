@@ -42,10 +42,10 @@
 
 <script>
 import NavBar from '../NavBar';
+const apiUrl = process.env.VUE_APP_API_URL;
 
 export default {
     /* eslint-disable vue/multi-word-component-names */
-
     name: 'HistoryProveedor',
     components: {
         NavBar,
@@ -69,7 +69,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/problemas', {
+                const response = await fetch(`${apiUrl}/api/problemas`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

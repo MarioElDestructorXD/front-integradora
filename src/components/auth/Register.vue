@@ -103,7 +103,9 @@ export default {
         };
     },
     methods: {
+        
         async handleSubmit() {
+            const apiUrl = process.env.VUE_APP_API_URL;
             const confirmRegister = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: '¿Quieres registrarte con los datos proporcionados?',
@@ -142,7 +144,7 @@ export default {
                 };
 
                 // Enviar el JSON al servidor
-                const response = await fetch('http://127.0.0.1:8080/auth/register', {
+                const response = await fetch(`${apiUrl}/auth/register`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

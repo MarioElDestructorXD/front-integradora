@@ -56,6 +56,8 @@
 
 <script>
 import Swal from 'sweetalert2';
+const apiUrl = process.env.VUE_APP_API_URL;
+
 
 export default {
     /* eslint-disable vue/multi-word-component-names */
@@ -85,7 +87,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -129,7 +131,7 @@ export default {
                     });
 
                     // Realizar la solicitud de cierre de sesión al backend
-                    const response = await fetch('http://localhost:8080/auth/logout', {
+                    const response = await fetch(`${apiUrl}/auth/logout`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

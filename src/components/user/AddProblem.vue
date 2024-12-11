@@ -108,6 +108,7 @@ export default {
     methods: {
 
         async obtenerUbicaciones() {
+            const apiUrl = process.env.VUE_APP_API_URL;
             try {
                 const token = localStorage.getItem('authToken');
                 if (!token) {
@@ -127,7 +128,7 @@ export default {
                     throw new Error('El perfil del usuario no está disponible.');
                 }
 
-                const url = `http://localhost:8080/api/ubicaciones/usuario/${this.profile.id}`;
+                const url = `${apiUrl}/api/ubicaciones/usuario/${this.profile.id}`;
                 console.log('URL de la solicitud de ubicaciones:', url); // Verificamos la URL
 
                 const response = await fetch(url, {
@@ -158,6 +159,8 @@ export default {
         },
 
         async obtenerPerfilUsuario() {
+            const apiUrl = process.env.VUE_APP_API_URL;
+
             try {
                 const token = localStorage.getItem('authToken');
                 if (!token) {
@@ -166,7 +169,7 @@ export default {
                     return;
                 }
 
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch(`${apiUrl}/api/user/profile`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -211,6 +214,8 @@ export default {
         },
 
         async handleSubmit() {
+            const apiUrl = process.env.VUE_APP_API_URL;
+
             const confirmCreate = await Swal.fire({
                 title: '¿Estás seguro?',
                 text: '¿Quieres crear este problema con los datos proporcionados?',
@@ -248,7 +253,7 @@ export default {
                     ubicacionId: this.ubicacionSeleccionada, // Asignar correctamente el ID de la ubicación
                 };
 
-                const response = await fetch('http://localhost:8080/api/problemas/post', {
+                const response = await fetch(`${apiUrl}/api/problemas/post`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
