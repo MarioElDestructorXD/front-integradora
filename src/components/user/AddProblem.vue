@@ -79,7 +79,7 @@ import NavBar from '../NavBar.vue';
 
 export default {
     name: 'AddProblem',
-    components:{
+    components: {
         NavBar,
     },
     data() {
@@ -166,7 +166,7 @@ export default {
                     return;
                 }
 
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch('http://localhost:8080/user/profile', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -221,6 +221,7 @@ export default {
 
             if (!confirmCreate.isConfirmed) return;
 
+            // Validación de campos requeridos
             if (!this.titulo || !this.descripcion || !this.categoria || !this.ubicacionSeleccionada) {
                 await Swal.fire({
                     title: 'Campos incompletos',
@@ -237,17 +238,16 @@ export default {
                     throw new Error('No autenticado');
                 }
 
+                // Payload que se enviará al backend
                 const data = {
                     titulo: this.titulo,
                     descripcion: this.descripcion,
                     categoria: this.categoria,
-                    fotografia: this.foto,
-                    estado: "ABIERTO",
-                    ubicacion: { id: this.ubicacionSeleccionada },
-                    usuario: { id: 1 }, // Ajustar si el ID del usuario viene de otro lado
+                    fotografia: this.foto, // Ya convertida a base64 en handleFotoChange
+                    ubicacionId: this.ubicacionSeleccionada, // Asignar correctamente el ID de la ubicación
                 };
 
-                const response = await fetch('http://localhost:8080/api/problemas', {
+                const response = await fetch('http://localhost:8080/api/problemas/post', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -268,7 +268,7 @@ export default {
                     confirmButtonText: 'Continuar',
                 });
 
-                this.$router.push('/problem');
+                this.$router.push('/problem'); // Redirigir después de crear
             } catch (error) {
                 await Swal.fire({
                     title: 'Error',
@@ -277,7 +277,8 @@ export default {
                     confirmButtonText: 'Entendido',
                 });
             }
-        },
+        }
+
     },
 };
 </script>
@@ -304,6 +305,7 @@ body {
     background: #f8f8f8;
     overflow: hidden;
 }
+
 /* Wrapper para el formulario */
 .wrapper {
     width: 100%;
@@ -402,6 +404,4 @@ form .row textarea::placeholder {
 .form-actions button:hover {
     background-color: #022c47;
 }
-
-
 </style>

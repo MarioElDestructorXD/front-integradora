@@ -6,24 +6,40 @@
         </header>
 
         <!-- Contenedor principal para problemas y detalles -->
-        <!-- Lista de Problemas -->
         <div id="problemas-container" class="problemas-container">
-            <p v-if="loading">Cargando problemas...</p>
+            <div class="filtro-categorias">
+                <label for="categoria">Filtrar por categoría:</label>
+                <select id="categoria" v-model="categoriaSeleccionada" @change="filtrarProblemas">
+                    <option value="">Todas</option>
+                    <option v-for="categoria in categoriasUnicas" :key="categoria" :value="categoria">
+                        {{ categoria }}
+                    </option>
+                </select>
+            </div>
+
+            <!-- Mostrar mensaje de carga si loading es verdadero -->
+            <div v-if="loading" class="spinner-container">
+                <div class="spinner"></div>
+                <p class="loading-text">Cargando...</p>
+            </div>
+
+
             <p v-else-if="!problemas.length">No tienes problemas registrados.</p>
-            <div v-for="problema in problemas" :key="problema.id" class="problema-card"
+
+            <div v-for="problema in problemasFiltrados" :key="problema.id" class="problema-card"
                 @click="mostrarDetalle(problema)">
                 <div class="problema-info">
                     <div class="informacion">
                         <h3>{{ problema.titulo }}</h3>
                         <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
                         <p v-if="problema.ubicacion"><strong>Ubicación:</strong> {{ problema.ubicacion.direccion }}</p>
-                        <!-- Mostrar ubicación -->
+                        <p><strong>Categoria:</strong> {{ problema.categoria }}</p>
                     </div>
                     <span :class="`badge ${problema.estado}`">{{ problema.estado }}</span>
                 </div>
             </div>
-        </div>
 
+        </div>
 
         <!-- Modal para mostrar los detalles del problema -->
         <div v-if="detalleVisible" class="modal-overlay" @click="cerrarDetalle">
@@ -35,7 +51,7 @@
                 <div class="modal-body">
                     <p><strong>Descripción:</strong> {{ detalle.descripcion }}</p>
                     <p v-if="detalle.ubicacion"><strong>Ubicación:</strong> {{ detalle.ubicacion.direccion }}</p>
-                    <!-- Mostrar ubicación en el modal -->
+                    <p><strong>Categoria:</strong> {{ detalle.categoria }}</p>
                     <img v-if="detalle.fotografia" :src="`data:image/jpeg;base64,${detalle.fotografia}`"
                         alt="Imagen del problema" class="detalle-imagen" />
                     <p v-else>No hay imagen disponible para este problema.</p>
@@ -46,6 +62,7 @@
             </div>
         </div>
 
+        <!-- Botón flotante -->
         <button class="floating-button" @click="abrirFormulario">
             <font-awesome-icon icon="plus" class="button-icon" />
         </button>
@@ -70,14 +87,34 @@ export default {
             username: '', // Nombre del usuario logueado
             userImage: '', // Imagen del usuario (si está disponible)
             isLoggingOut: false, // Estado para controlar el spinner
+            categoriaSeleccionada: '', // Categoría seleccionada
         };
+    },
+    computed: {
+        // Categorías únicas para mostrar en el selector
+        categoriasUnicas() {
+            const categorias = this.problemas.map((problema) => problema.categoria);
+            return [...new Set(categorias)];
+        },
+        // Filtrar problemas según la categoría seleccionada
+        problemasFiltrados() {
+            if (!this.categoriaSeleccionada) {
+                return this.problemas;
+            }
+            return this.problemas.filter(
+                (problema) => problema.categoria === this.categoriaSeleccionada
+            );
+        },
     },
     created() {
         this.cargarProblemas();
         this.obtenerPerfilUsuario();
     },
     methods: {
-
+        filtrarProblemas() {
+            // Este método es opcional ya que `problemasFiltrados` es reactivo
+            console.log('Categoría seleccionada:', this.categoriaSeleccionada);
+        },
         abrirFormulario() {
             this.$router.push('/addproblem');
         },
@@ -90,7 +127,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/problemas/mis-problemas', {
+                const response = await fetch('http://localhost:8080/api/problemas', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -120,7 +157,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch('http://localhost:8080/user/profile', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -371,5 +408,69 @@ export default {
 
 .floating-button:hover {
     background-color: #0056b3;
+}
+
+#problemas-container {
+    margin-top: 0;
+    /* Asegura que no haya margen extra */
+}
+
+.filtro-categorias {
+    width: 100%;
+    margin-bottom: 1rem;
+    /* Espacio con el contenedor de problemas */
+    display: flex;
+    justify-content: flex-start;
+    /* Alinear el contenido a la izquierda */
+    align-items: center;
+    gap: 0.5rem;
+    /* Espacio entre el label y el select */
+}
+
+.filtro-categorias label {
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+
+.spinner-container {
+    display: flex;
+    flex-direction: column;
+    /* Asegura que el spinner y el texto estén en una columna */
+    justify-content: center;
+    align-items: center;
+    margin-top: 10%;
+    /* Asegura que ocupe toda la altura de la ventana */
+    width: 100%;
+    /* Asegura que ocupe todo el ancho disponible */
+    text-align: center;
+    /* Centra el texto debajo del spinner */
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 100px;
+    height: 100px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.loading-text {
+    margin-top: 10px;
+    /* Espacio entre el spinner y el texto */
+    font-size: 18px;
+    color: #3498db;
+    /* Color opcional para el texto */
 }
 </style>

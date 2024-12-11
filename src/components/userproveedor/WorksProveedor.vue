@@ -23,7 +23,7 @@
                         <h3>{{ problema.titulo }}</h3>
                         <p><strong>Descripción:</strong> {{ problema.descripcion }}</p>
                         <p><strong>Creado por:</strong> {{ problema.creadoPor }}</p>
-                        <p><strong>Dirección:</strong> {{ problema.ubicacion.direccion }}</p>
+                        <p><strong>Dirección:</strong> {{ problema.ubicacion.direccion }}</p> <!-- Dirección -->
                         <span :class="['badge', problema.estado]">{{ problema.estado }}</span>
                     </div>
                 </div>
@@ -55,12 +55,20 @@
                         :disabled="detalle.estado === 'ABIERTO'">
                         Cancelar problema
                     </button>
+                    <button @click="terminarProblema(detalle.idProblema)" class="finish-btn"
+                        :disabled="detalle.estado === 'TERMINADO'">
+                        Terminar
+                    </button>
                     <button @click="cerrarDetalle" class="close-btn">
                         Cerrar
                     </button>
                 </div>
             </div>
         </div>
+
+        <button class="floating-button" @click="abrirFormulario">
+            <font-awesome-icon icon="plus" class="button-icon" />
+        </button>
     </div>
 </template>
 
@@ -70,7 +78,7 @@ import Swal from 'sweetalert2';
 import NavBar from '../NavBar';
 
 export default {
-    name: 'ProblemProveedor',
+    name: 'WorksProveedor',
     components: {
         NavBar
     },
@@ -153,9 +161,8 @@ export default {
                 });
                 return;
             }
-
-            // Realizar la solicitud para cancelar el problema
             try {
+                console.log('Intentando cancelar problema con ID:', problemaId); // Registro de depuración
                 const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/cancelar`, {
                     method: 'PUT',
                     headers: {
@@ -175,6 +182,7 @@ export default {
                     this.cerrarDetalle();    // Cerrar el modal
                 } else {
                     const errorData = await response.text();
+                    console.error('Error al cancelar problema:', errorData); // Registro de error
                     Swal.fire({
                         icon: 'error',
                         title: 'Error al cancelar el problema',
@@ -193,9 +201,58 @@ export default {
             }
         },
 
+        async terminarProblema(problemaId) {
+            const token = localStorage.getItem('authToken');
 
+            if (!token) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No autenticado',
+                    text: 'Por favor inicia sesión.',
+                    timer: 3000,
+                });
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/problemas/${problemaId}/terminar`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                if (response.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Problema terminado',
+                        text: 'El problema ha sido marcado como terminado.',
+                        timer: 3000,
+                    });
+                    this.cargarProblemas();  // Recargar los problemas después de terminar
+                    this.cerrarDetalle();    // Cerrar el modal de detalle
+                } else {
+                    const errorData = await response.text();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al terminar problema',
+                        text: errorData || 'Por favor intenta nuevamente.',
+                        timer: 3000,
+                    });
+                }
+            } catch (error) {
+                console.error('Error al terminar problema:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de conexión',
+                    text: 'No se pudo terminar el problema.',
+                    timer: 3000,
+                });
+            }
+        },
         abrirFormulario() {
-            this.$router.push('/addproveedor');  // Redirigir al formulario para agregar un problema
+            this.$router.push('/addproblem');  // Redirigir al formulario para agregar un problema
         },
 
         // Método para cargar todos los problemas
@@ -220,25 +277,24 @@ export default {
                 }
 
                 const data = await response.json();
-                this.problemas = data.filter(problema => problema.estado === 'ABIERTO');
 
-                // Procesa los datos de los problemas
+                // Filtrar los problemas con estado 'EN_PROCESO'
+                this.problemas = data.filter(problema => problema.estado === 'EN_PROCESO');
+
+                // Formatear los datos de usuario directamente
                 this.problemas.forEach((problema) => {
                     const usuario = problema.usuario;
                     problema.creadoPor = `${usuario.name} ${usuario.firstSurname} ${usuario.secondSurname}`;
-                    // Asegúrate de que la ubicación esté bien mapeada
-                    if (problema.ubicacion) {
-                        problema.ubicacion.direccion = problema.ubicacion.direccion || 'Dirección no especificada';
-                    }
                 });
 
-                console.log('Problemas cargados:', this.problemas);
+                console.log('Problemas filtrados:', this.problemas);
                 this.loading = false;
             } catch (error) {
                 console.error('Error al cargar problemas:', error);
                 this.loading = false;
             }
         },
+
 
         // Método para obtener el perfil del usuario
         async obtenerPerfilUsuario() {

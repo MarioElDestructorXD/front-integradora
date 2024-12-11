@@ -228,7 +228,7 @@ export default {
             }
             try {
                 this.isLoading = true;
-                const response = await fetch("http://localhost:8080/api/user/profile", {
+                const response = await fetch("http://localhost:8080/user/profile", {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",

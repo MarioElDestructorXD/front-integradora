@@ -21,7 +21,7 @@
                             Perfil
                         </router-link>
                         <router-link to="/problem" class="navbar-profile-link">
-                            Problemas
+                            Mis Problemas
                         </router-link>
                     </template>
                     <template v-if="role === 'PROVEEDOR'">
@@ -30,6 +30,12 @@
                         </router-link>
                         <router-link to="/problemProveedor" class="navbar-profile-link">
                             Todos Los Problemas
+                        </router-link>
+                        <router-link to="/worksproveedor" class="navbar-profile-link">
+                            Problemas Pendientes
+                        </router-link>
+                        <router-link to="/history" class="navbar-profile-link">
+                            Historial
                         </router-link>
                     </template>
                     <!-- Enlace de cerrar sesión visible para todos -->
@@ -79,7 +85,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/api/user/profile', {
+                const response = await fetch('http://localhost:8080/user/profile', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -244,6 +250,10 @@ export default {
     text-decoration: none;
     cursor: pointer;
     font-size: 16px;
+}
+
+.logout-link:hover {
+    text-decoration: underline;
 }
 
 /* Spinner de cierre de sesión */

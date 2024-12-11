@@ -51,8 +51,8 @@
                         <li v-for="(address, index) in addresses" :key="index">
                             {{ address.direccion }} (Lat: {{ address.latitud }}, Lng: {{ address.longitud }})
                             <!-- Ícono de eliminación -->
-                            <i  @click="deleteAddress(address.id)"
-                                title="Eliminar dirección"><font-awesome-icon icon="trash" class="input-icon" /></i>
+                            <i @click="deleteAddress(address.id)" title="Eliminar dirección"><font-awesome-icon
+                                    icon="trash" class="input-icon" /></i>
                         </li>
                     </ul>
                 </div>
@@ -228,7 +228,7 @@ export default {
             }
             try {
                 this.isLoading = true;
-                const response = await fetch("http://localhost:8080/api/user/profile", {
+                const response = await fetch("http://localhost:8080/user/profile", {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -246,6 +246,7 @@ export default {
                         email: data.email,
                         phone: data.phone,
                         profileImage: data.photo,
+                        role: data.role,  // Asegúrate de incluir el rol aquí
                     };
                     await this.fetchUserAddresses();
                 } else {
@@ -325,6 +326,20 @@ export default {
                 this.$router.push("/login");
                 return;
             }
+
+            // Verifica si el rol del usuario es PROVEEDOR
+            if (this.profile.role === 'PROVEEDOR') {
+                // Si ya tiene una dirección registrada, no permitir agregar más
+                if (this.addresses.length >= 1) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: '¡Error!',
+                        text: 'Los proveedores no pueden registrar más de una dirección.',
+                    });
+                    return;
+                }
+            }
+
             try {
                 this.isLoading = true;
                 const response = await fetch(`http://localhost:8080/api/ubicaciones/${this.profile.id}`, {
@@ -335,6 +350,7 @@ export default {
                     },
                     body: JSON.stringify(this.newAddress),
                 });
+
                 if (response.ok) {
                     await this.fetchUserAddresses();
                     this.closeModal();
@@ -353,7 +369,6 @@ export default {
                 this.isLoading = false;
             }
         },
-
         onAddressInput() {
             if (this.newAddress.direccion.length > 3) {
                 this.autocompleteService.getPlacePredictions(
