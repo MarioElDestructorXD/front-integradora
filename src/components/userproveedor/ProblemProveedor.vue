@@ -249,7 +249,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/user/profile', {
+                const response = await fetch('http://localhost:8080/api/user/profile', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',

@@ -166,7 +166,7 @@ export default {
                     return;
                 }
 
-                const response = await fetch('http://localhost:8080/user/profile', {
+                const response = await fetch('http://localhost:8080/api/user/profile', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -199,13 +199,14 @@ export default {
             // Aquí puedes realizar cualquier lógica adicional para mostrar las direcciones en el frontend
         },
         handleFotoChange(event) {
-            const file = event.target.files[0];
+            const file = event.target.files[0]; // Obtiene el archivo seleccionado
             if (file) {
-                const reader = new FileReader();
+                const reader = new FileReader(); // Crea una instancia de FileReader
                 reader.onloadend = () => {
-                    this.foto = reader.result.split(',')[1]; // Convertimos a base64
+                    // Divide la cadena resultante para obtener solo los datos base64
+                    this.foto = reader.result.split(',')[1];
                 };
-                reader.readAsDataURL(file);
+                reader.readAsDataURL(file); // Lee el archivo como una URL de datos (base64)
             }
         },
 

@@ -305,7 +305,7 @@ export default {
             }
 
             try {
-                const response = await fetch('http://localhost:8080/user/profile', {
+                const response = await fetch('http://localhost:8080/api/user/profile', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
@@ -750,7 +750,31 @@ export default {
     background-color: red;
 }
 
+.modal-footer .finish-btn {
+    background-color: #28a745;
+    /* Verde como indicador de éxito */
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
 
+.modal-footer .finish-btn:hover {
+    background-color: #218838;
+    /* Un verde más oscuro al pasar el mouse */
+}
+
+/* Estilo para el botón Terminar deshabilitado */
+.modal-footer .finish-btn:disabled {
+    background-color: #e0e0e0;
+    /* Color de fondo gris claro */
+    color: #b0b0b0;
+    /* Color de texto gris oscuro */
+    cursor: not-allowed;
+    /* Cursor de no permitido */
+}
 
 @keyframes spin {
     0% {
